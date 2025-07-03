@@ -1,0 +1,7 @@
+marimo
+marimo[lsp]
+
+pandas
+
+spacy
+en-core-web-sm
