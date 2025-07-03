@@ -23,7 +23,7 @@ def _():
     def preprocess_caption(caption):
         replacements = [
             # replace newline characters with simple spaces.
-            (r'\r\n|\r|\n', ''),
+            (r'\r\n|\r|\n', ' '),
 
             # remove mentions and hashtags.
             (r'@[^\s]+', ''),
@@ -147,11 +147,62 @@ def _(doc):
 
 @app.cell
 def _(filtered_entities, filtered_tokens):
-    caption_labels = (
+    caption_labels = list(set(
         [filtered_token.text.lower() for filtered_token in filtered_tokens] +
-        [filtered_entity.text for filtered_entity in filtered_entities])
+        [filtered_entity.text.lower() for filtered_entity in filtered_entities]))
 
     print(caption_labels)
+    return (caption_labels,)
+
+
+@app.cell
+def _(caption_labels, preprocessed_caption):
+    import keybert
+    from sklearn.feature_extraction.text import CountVectorizer
+
+    def rank_caption_labels(caption_labels: str) -> str:
+        """
+        Sentence Transformers (a.k.a. SBERT) is the go-to Python module for accessing, using, and
+        training state-of-the-art embedding and reranker models. It can be used to compute
+        embeddings using Sentence Transformer models (quickstart), to calculate similarity scores
+        using Cross-Encoder (a.k.a. reranker) models (quickstart), or to generate sparse embeddings
+        using Sparse Encoder models (quickstart). This unlocks a wide range of applications,
+        including semantic search, semantic textual similarity, and paraphrase mining.
+    
+        A wide selection of over 10,000 pre-trained Sentence Transformers models are available for
+        immediate use on 🤗 Hugging Face.
+        """
+        keyBERT_model = keybert.KeyBERT(model="all-MiniLM-L6-v2")
+    
+        """
+        An unexpectly important component of KeyBERT is the CountVectorizer. In KeyBERT, it is used
+        to split up your documents into candidate keywords and keyphrases.
+        Since we use the vectorizer to split up the documents after embedding them, we can parse
+        the document however we want as it does not affect the quality of the document embeddings.
+        """
+        vectorizer = CountVectorizer(ngram_range=(1, 3),
+                                     vocabulary=caption_labels)
+    
+        """
+        KeyBERT supports quite a few embedding models. Having the option to choose embedding models
+        allow you to leverage pre-trained embeddings that suit your use-case.
+    
+        As a default, KeyBERT simply compares the documents and candidate keywords/keyphrases based
+        on their cosine similarity. However, this might lead to very similar words ending up in the
+        list of most accurate keywords/keyphrases. To make sure they are a bit more diversified
+        we can use Maximal Margin Relevance (MMR).
+        """
+        keywords = keyBERT_model.extract_keywords(preprocessed_caption.lower(),
+                                                  vectorizer=vectorizer,
+                                                  top_n=5,
+                                                  use_mmr=True,
+                                                  diversity=0.5)
+
+        ranked_caption_labels = [keyword[0] for keyword in keywords]
+        return ranked_caption_labels
+
+    ranked_caption_labels = rank_caption_labels(caption_labels)
+    print(ranked_caption_labels)
     return
 
 

@@ -25,8 +25,7 @@
 
           venvDir = ".venv";
 
-          LD_LIBRARY_PATH =
-            "${stdenv.cc.cc.lib.outPath}/lib:${pythonManylinuxPackages.manylinux2014Package}/lib:$LD_LIBRARY_PATH";
+          LD_LIBRARY_PATH = "${stdenv.cc.cc.lib.outPath}/lib:$LD_LIBRARY_PATH";
 
           shellHook = "source ./.venv/bin/activate";
         };
