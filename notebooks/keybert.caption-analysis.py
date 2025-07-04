@@ -46,10 +46,8 @@ def _(preprocessed_caption):
     import spacy
     import keybert
 
-    """
-    KeyBERT supports quite a few embedding models. Having the option to choose embedding models
-    allow you to leverage pre-trained embeddings that suit your use-case.
-    """
+    # KeyBERT supports quite a few embedding models. Having the option to choose embedding models
+    # allow you to leverage pre-trained embeddings that suit your use-case.
 
     def run_keyBERT_With_spacy():
         spacy.prefer_gpu()
