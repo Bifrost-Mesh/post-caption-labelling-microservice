@@ -159,21 +159,28 @@ def _(filtered_entities, filtered_tokens):
 def _(caption_labels, preprocessed_caption):
     import keybert
     from sklearn.feature_extraction.text import CountVectorizer
+    from sentence_transformers import SentenceTransformer
+
+    """
+    Sentence Transformers (a.k.a. SBERT) is the go-to Python module for accessing, using, and
+    training state-of-the-art embedding and reranker models. It can be used to compute embeddings
+    using Sentence Transformer models, to calculate similarity scores using Cross-Encoder
+    (a.k.a. reranker) models, or to generate sparse embeddings using Sparse Encoder models. This
+    unlocks a wide range of applications, including semantic search, semantic textual similarity,
+    and paraphrase mining.
+
+    A wide selection of over 10,000 pre-trained Sentence Transformers models are available for
+    immediate use on 🤗 Hugging Face.
+    """
+    sentence_transformer_model = SentenceTransformer("all-MiniLM-L6-v2")
+
+    """
+    KeyBERT supports quite a few embedding models. Having the option to choose embedding models
+    allow you to leverage pre-trained embeddings that suit your use-case.
+    """
+    keyBERT_model = keybert.KeyBERT(model=sentence_transformer_model)
 
     def rank_caption_labels(caption_labels: str) -> str:
-        """
-        Sentence Transformers (a.k.a. SBERT) is the go-to Python module for accessing, using, and
-        training state-of-the-art embedding and reranker models. It can be used to compute
-        embeddings using Sentence Transformer models (quickstart), to calculate similarity scores
-        using Cross-Encoder (a.k.a. reranker) models (quickstart), or to generate sparse embeddings
-        using Sparse Encoder models (quickstart). This unlocks a wide range of applications,
-        including semantic search, semantic textual similarity, and paraphrase mining.
-    
-        A wide selection of over 10,000 pre-trained Sentence Transformers models are available for
-        immediate use on 🤗 Hugging Face.
-        """
-        keyBERT_model = keybert.KeyBERT(model="all-MiniLM-L6-v2")
-    
         """
         An unexpectly important component of KeyBERT is the CountVectorizer. In KeyBERT, it is used
         to split up your documents into candidate keywords and keyphrases.
@@ -182,11 +189,8 @@ def _(caption_labels, preprocessed_caption):
         """
         vectorizer = CountVectorizer(ngram_range=(1, 3),
                                      vocabulary=caption_labels)
-    
+
         """
-        KeyBERT supports quite a few embedding models. Having the option to choose embedding models
-        allow you to leverage pre-trained embeddings that suit your use-case.
-    
         As a default, KeyBERT simply compares the documents and candidate keywords/keyphrases based
         on their cosine similarity. However, this might lead to very similar words ending up in the
         list of most accurate keywords/keyphrases. To make sure they are a bit more diversified
@@ -203,6 +207,61 @@ def _(caption_labels, preprocessed_caption):
 
     ranked_caption_labels = rank_caption_labels(caption_labels)
     print(ranked_caption_labels)
+    return ranked_caption_labels, sentence_transformer_model
+
+
+@app.cell
+def _(ranked_caption_labels, sentence_transformer_model):
+    post_categories = [
+        "travel",
+        "technology",
+        "photography",
+        "music",
+        "food",
+        "football",
+        "dance",
+        "cricket",
+        "yoga",
+        "gym",
+        "art"
+    ]
+
+    from sentence_transformers import util
+    from collections import Counter
+
+    def match_ranked_caption_labels_to_post_categories(ranked_caption_labels):
+        ranked_caption_label_encodings = sentence_transformer_model.encode(ranked_caption_labels,
+                                                                           convert_to_tensor=True)
+        post_category_encodings = sentence_transformer_model.encode(post_categories, convert_to_tensor=True)
+
+        cosine_similarities = util.cos_sim(ranked_caption_label_encodings, post_category_encodings)
+
+        post_category_match_counts = Counter()
+        for i, ranked_caption_label in enumerate(ranked_caption_labels):
+            cosine_similarity = cosine_similarities[i]
+
+            best_matched_post_category_index = cosine_similarity.argmax().item()
+            best_matched_post_category = post_categories[best_matched_post_category_index]
+
+            print({
+                "caption label": ranked_caption_label,
+                "matched category" : best_matched_post_category,
+                "similarity score" : cosine_similarity.max().item()
+            })
+
+            post_category_match_counts[best_matched_post_category] += 1
+
+        total_match_count = sum(post_category_match_counts.values())
+        post_category_match_percentages = {
+            post_category:
+                round(post_category_match_count * 100 / total_match_count, 2)
+
+            for post_category, post_category_match_count in post_category_match_counts.items()
+        }
+        return post_category_match_percentages
+
+    match_percentages = match_ranked_caption_labels_to_post_categories(ranked_caption_labels)
+    print(match_percentages)
     return
 
 
