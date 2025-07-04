@@ -1,8 +1,7 @@
-# Recommendation Engine
+# Post caption Labelling Microservice
 
 ![Python Badge](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=fff&style=for-the-badge)
 ![spaCy Badge](https://img.shields.io/badge/spaCy-09A3D5?logo=spacy&logoColor=fff&style=for-the-badge)
-![PyTorch Badge](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=fff&style=for-the-badge)
 
 ## Development Environment setup
 
@@ -32,8 +31,6 @@ marimo edit \
 ```
 
 ## REFERENCEs
-
-- [22: Recommendation Engine (YouTube, TikTok) | Systems Design Interview Questions With Ex-Google SWE](https://www.youtube.com/watch?v=QrZTmiZSRcw)
 
 - [An overview of marimo](https://www.youtube.com/watch?v=3N6lInzq5MI)
 

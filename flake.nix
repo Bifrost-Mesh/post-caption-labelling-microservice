@@ -1,5 +1,5 @@
 {
-  description = "Recommendation Engine development environment";
+  description = "Post caption Labelling Microservice development environment";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
