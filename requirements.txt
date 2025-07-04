@@ -8,3 +8,5 @@ en-core-web-sm
 
 keybert
 keybert[spacy]
+
+kafka-python
